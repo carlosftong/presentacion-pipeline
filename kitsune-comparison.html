@@ -209,11 +209,13 @@
                         <span class="expandible-icon">▼</span>
                     </div>
                     <div class="expandible-content">
+                        <p style="margin-bottom: 12px;"><strong>¿Qué medimos?</strong> Qué tan "limpio" es el código: sin errores de estilo, sin funciones demasiado complejas, sin copias innecesarias.</p>
                         <ul style="margin: 8px 0 8px 24px;">
-                            <li>ESLint violations: &lt;10</li>
-                            <li>Complexity: &lt;8 promedio</li>
-                            <li>Duplication: &lt;3%</li>
+                            <li><strong>ESLint violations:</strong> Errores de estilo &lt;10 (código bien formateado)</li>
+                            <li><strong>Complexity:</strong> Funciones no demasiado complicadas (&lt;8 promedio)</li>
+                            <li><strong>Duplication:</strong> Poco código copiado/pegado (&lt;3%)</li>
                         </ul>
+                        <p style="margin-top: 12px; color: var(--text-secondary); font-size: 13px;">✅ <strong>Ganador:</strong> Quien tenga menos violaciones + complejidad más simple</p>
                     </div>
 
                     <div class="expandible" onclick="toggleExpand(this)">
@@ -223,11 +225,13 @@
                         <span class="expandible-icon">▼</span>
                     </div>
                     <div class="expandible-content">
+                        <p style="margin-bottom: 12px;"><strong>¿Qué medimos?</strong> ¿Funciona el código? ¿Los tests pasan? ¿Se rompe algo?</p>
                         <ul style="margin: 8px 0 8px 24px;">
-                            <li>Test coverage: ≥75%</li>
-                            <li>Test pass rate: 100%</li>
-                            <li>E2E sin crashes: ✓</li>
+                            <li><strong>Test coverage ≥75%:</strong> 75% del código está testeado (No hay código fantasma sin tests)</li>
+                            <li><strong>Test pass rate 100%:</strong> Todos los tests pasan (Nada está roto)</li>
+                            <li><strong>E2E sin crashes:</strong> El pipeline completo corre sin errores fatales</li>
                         </ul>
+                        <p style="margin-top: 12px; color: var(--text-secondary); font-size: 13px;">✅ <strong>Ganador:</strong> Quien tenga más coverage + todos los tests pasando</p>
                     </div>
 
                     <div class="expandible" onclick="toggleExpand(this)">
@@ -237,11 +241,13 @@
                         <span class="expandible-icon">▼</span>
                     </div>
                     <div class="expandible-content">
+                        <p style="margin-bottom: 12px;"><strong>¿Qué medimos?</strong> ¿Se entiende el código? ¿Está bien documentado? ¿Se puede cambiar sin romper todo?</p>
                         <ul style="margin: 8px 0 8px 24px;">
-                            <li>Architecture coherence: Manual (1-10)</li>
-                            <li>Avg function size: &lt;30 líneas</li>
-                            <li>Comment ratio: &gt;20%</li>
+                            <li><strong>Architecture coherence (1-10):</strong> ¿Tiene sentido la estructura? ¿Los patrones son consistentes?</li>
+                            <li><strong>Avg function size &lt;30 líneas:</strong> Funciones pequeñas = más fácil entender qué hace cada una</li>
+                            <li><strong>Comment ratio &gt;20%:</strong> El código explica por qué hace lo que hace, no solo qué hace</li>
                         </ul>
+                        <p style="margin-top: 12px; color: var(--text-secondary); font-size: 13px;">✅ <strong>Ganador:</strong> Quien tenga arquitectura más clara + funciones más pequeñas + mejor documentado</p>
                     </div>
 
                     <div class="expandible" onclick="toggleExpand(this)">
@@ -251,11 +257,13 @@
                         <span class="expandible-icon">▼</span>
                     </div>
                     <div class="expandible-content">
+                        <p style="margin-bottom: 12px;"><strong>¿Qué medimos?</strong> ¿Qué tan rápido es? ¿Cuántos recursos usa?</p>
                         <ul style="margin: 8px 0 8px 24px;">
-                            <li>Pipeline time: Comparativa vs Claude</li>
-                            <li>Peak memory: &lt;X GB</li>
-                            <li>API latency: &lt;Z ms</li>
+                            <li><strong>Pipeline time:</strong> ¿Cuánto tarda generar un capítulo? (Comparada con Claude)</li>
+                            <li><strong>Peak memory:</strong> ¿Cuánta RAM usa? (Menos es mejor)</li>
+                            <li><strong>API latency:</strong> ¿Cuánto tarda en responder cada solicitud?</li>
                         </ul>
+                        <p style="margin-top: 12px; color: var(--text-secondary); font-size: 13px;">✅ <strong>Ganador:</strong> Quien sea más rápido + use menos recursos</p>
                     </div>
 
                     <div class="expandible" onclick="toggleExpand(this)">
@@ -265,11 +273,14 @@
                         <span class="expandible-icon">▼</span>
                     </div>
                     <div class="expandible-content">
+                        <p style="margin-bottom: 12px;"><strong>¿Qué medimos?</strong> Mi impresión general como revisor experto: ¿Este código puedo usarlo en producción?</p>
                         <ul style="margin: 8px 0 8px 24px;">
-                            <li>9-10: Production-ready</li>
-                            <li>7-8: Bueno, mejoras menores</li>
-                            <li>5-6: Funcional, necesita refactoring</li>
+                            <li><strong>9-10:</strong> Production-ready. Puedo usar esto en producción sin preocupaciones</li>
+                            <li><strong>7-8:</strong> Bueno. Funciona bien, solo detalles menores</li>
+                            <li><strong>5-6:</strong> Funcional pero necesita trabajo. No puedo confiar 100%</li>
+                            <li><strong>&lt;5:</strong> Problemático. Hay issues serios</li>
                         </ul>
+                        <p style="margin-top: 12px; color: var(--text-secondary); font-size: 13px;">✅ <strong>Ganador:</strong> Quien tenga score más alto (más cercano a 10)</p>
                     </div>
                 </div>
             </div>
