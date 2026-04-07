@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lo que aprendí construyendo software con IA</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2128;
+    --border: #21262d;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f78166;
+    --accent4: #d2a8ff;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --dim: #30363d;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ─── SLIDE SHELL ─── */
+  .deck { width: 100%; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+  }
+  .slide.active  { opacity: 1; transform: translateX(0); pointer-events: all; }
+  .slide.exit    { opacity: 0; transform: translateX(-40px); }
+
+  /* ─── LEFT PANEL ─── */
+  .left-panel {
+    padding: 52px 48px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  /* ─── RIGHT PANEL ─── */
+  .right-panel {
+    padding: 52px 48px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--surface2);
+    overflow: hidden;
+  }
+
+  .ctx-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .ctx-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .ctx-body p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--muted);
+  }
+
+  .ctx-body p strong { color: var(--text); font-weight: 600; }
+  .ctx-body p em     { color: var(--accent); font-style: normal; }
+
+  .ctx-callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 14px 16px;
+    margin-top: 4px;
+  }
+  .ctx-callout.green  { border-left-color: var(--accent2); }
+  .ctx-callout.purple { border-left-color: var(--accent4); }
+  .ctx-callout.red    { border-left-color: var(--accent3); }
+
+  .ctx-callout p {
+    font-size: 13px !important;
+    color: var(--text) !important;
+    line-height: 1.6 !important;
+  }
+
+  .ctx-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ctx-list li {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    padding-left: 16px;
+    position: relative;
+  }
+  .ctx-list li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--dim);
+  }
+  .ctx-list li strong { color: var(--text); }
+
+  /* ─── LEFT CONTENT: Typography ─── */
+  .label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .label.green  { color: var(--accent2); }
+  .label.purple { color: var(--accent4); }
+  .label.red    { color: var(--accent3); }
+
+  h1 {
+    font-size: clamp(26px, 3vw, 40px);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  h2 {
+    font-size: clamp(22px, 2.5vw, 34px);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text);
+  }
+  .sub {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.75;
+    margin-top: 16px;
+  }
+  .sub em { color: var(--text); font-style: normal; }
+  .sub .accent { color: var(--accent); }
+
+  .line { width: 36px; height: 2px; background: var(--accent); margin: 20px 0; border-radius: 2px; }
+  .line.green  { background: var(--accent2); }
+  .line.purple { background: var(--accent4); }
+
+  /* ─── LAYERS ─── */
+  .layers { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+  .layer {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .layer-icon { font-size: 18px; width: 28px; flex-shrink: 0; margin-top: 1px; }
+  .layer-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .layer-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .layer.l1 { border-left: 3px solid var(--accent4); }
+  .layer.l2 { border-left: 3px solid var(--accent); }
+  .layer.l3 { border-left: 3px solid var(--accent2); }
+
+  /* ─── CARDS ─── */
+  .grid { display: grid; gap: 12px; margin-top: 20px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card-label { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .card h3 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+  .card p  { font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .card.blue   { border-top: 2px solid var(--accent); }
+  .card.green  { border-top: 2px solid var(--accent2); }
+  .card.purple { border-top: 2px solid var(--accent4); }
+  .card.red    { border-top: 2px solid var(--accent3); }
+
+  /* ─── TIMELINE ─── */
+  .timeline { display: flex; align-items: flex-start; gap: 0; margin-top: 24px; }
+  .t-step { flex: 1; position: relative; text-align: center; }
+  .t-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 15px; left: 60%; right: -40%;
+    height: 1px; background: var(--dim);
+  }
+  .t-dot {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--dim);
+    margin: 0 auto 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    position: relative; z-index: 1;
+  }
+  .t-dot.on { border-color: var(--accent); color: var(--accent); }
+  .t-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px; padding: 0 4px; }
+  .t-desc  { font-size: 11px; color: var(--muted); line-height: 1.5; padding: 0 4px; }
+
+  /* ─── EQUATION ─── */
+  .equation { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+  .eq-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; text-align: center; }
+  .eq-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .eq-value { font-size: 15px; font-weight: 700; color: var(--text); }
+  .eq-sep { font-size: 20px; color: var(--dim); font-weight: 300; }
+
+  /* ─── PIPELINE ─── */
+  .pipeline {
+    display: flex; align-items: center;
+    gap: 6px; flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  .p-step {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; text-align: center; min-width: 80px;
+  }
+  .p-role { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .p-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .p-step.blue   { border-top: 2px solid var(--accent); }
+  .p-step.green  { border-top: 2px solid var(--accent2); }
+  .p-step.purple { border-top: 2px solid var(--accent4); }
+  .p-step.red    { border-top: 2px solid var(--accent3); }
+  .p-arrow { color: var(--dim); font-size: 14px; }
+  .p-gate {
+    background: transparent; border: 1px dashed var(--accent3);
+    border-radius: 6px; padding: 6px 10px;
+    font-size: 10px; font-weight: 600; color: var(--accent3);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .p-parallel { display: flex; flex-direction: column; gap: 6px; }
+
+  /* ─── FINAL GRID ─── */
+  .final-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+
+  /* ─── NAV ─── */
+  .nav {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 14px; z-index: 100;
+  }
+  .nav-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; font-size: 13px;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .nav-counter { font-size: 11px; color: var(--muted); min-width: 44px; text-align: center; letter-spacing: 1px; }
+
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px;
+    background: var(--accent); transition: width 0.4s ease; z-index: 100;
+  }
+  .slide-num {
+    position: fixed; top: 20px; right: 28px;
+    font-size: 10px; color: var(--dim); letter-spacing: 1px; z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="slide-num" id="slide-num">01 / 08</div>
+
+<div class="deck" id="deck">
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 1 — El punto de partida
+  ══════════════════════════════════════════ -->
+  <div class="slide active" data-index="0">
+    <div class="left-panel">
+      <div class="label">Punto de partida</div>
+      <h1>La pregunta que cambió cómo construyo software</h1>
+      <div class="line"></div>
+      <p class="sub">
+        Al principio la pregunta era <em>"¿cómo le pido esto al modelo?"</em><br><br>
+        Con el tiempo esa pregunta fue cambiando hacia <span class="accent">"¿cómo entrego software que funciona?"</span><br><br>
+        Esa diferencia — del prompt al SDLC — es lo que fue dando forma a todo lo que construí.
+      </p>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">De dónde venía y hacia dónde fue evolucionando</div>
+      <div class="ctx-body">
+        <p>El punto de partida habitual cuando se empieza a construir con IA es el prompt: <strong>"¿cómo le pido esto al modelo?"</strong> No es un mal punto de partida — es el natural. El problema aparece cuando se queda ahí.</p>
+        <p>Lo que fui descubriendo es que el modelo es una pieza dentro de un proceso más grande: <strong>diseño → código → tests → seguridad → despliegue</strong>. Si el proceso no está definido, el agente ejecuta bien dentro de un caos bien automatizado.</p>
+        <div class="ctx-callout">
+          <p>La automatización amplifica lo que ya existe. Si el proceso tiene baches, la IA los recorre más rápido. Por eso el SDLC pasó a ser el punto de partida, no el prompt.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 2 — Tres capas de pensamiento
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="1">
+    <div class="left-panel">
+      <div class="label">Lo que fui entendiendo</div>
+      <h2>Tres capas que fueron tomando forma</h2>
+      <div class="layers">
+        <div class="layer l1">
+          <div class="layer-icon">🗺️</div>
+          <div>
+            <div class="layer-title">Estratégico — ¿Qué construir y por qué?</div>
+            <div class="layer-desc">Visión del producto, casos de uso, épicas de trabajo. Sin esta capa, los agentes ejecutan sin dirección.</div>
+          </div>
+        </div>
+        <div class="layer l2">
+          <div class="layer-icon">🏗️</div>
+          <div>
+            <div class="layer-title">Técnico — ¿Cómo arquitectarlo?</div>
+            <div class="layer-desc">SDLC como pipeline, arquitectura hexagonal, patrones de agentes. Define las reglas del juego.</div>
+          </div>
+        </div>
+        <div class="layer l3">
+          <div class="layer-icon">⚙️</div>
+          <div>
+            <div class="layer-title">Operacional — Claude Code ejecuta el plan</div>
+            <div class="layer-desc">Sesiones con nombre y objetivo. Agentes especializados. Artefactos trazables. El plan se vuelve código.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">Cómo se fueron diferenciando estas tres capas</div>
+      <div class="ctx-body">
+        <p>No surgieron juntas. Al principio todo era operacional: abrir Claude, pedir código, iterar. Funcionaba para cosas pequeñas. Cuando los proyectos crecieron, empezaron a aparecer problemas difíciles de depurar: <strong>decisiones técnicas sin criterio claro, trabajo que no conectaba con el objetivo real.</strong></p>
+        <p>Lo que fui aprendiendo es que estas tres capas son distintas y necesitan atención separada. Mezclarlas genera ruido; separarlas da claridad:</p>
+        <div class="ctx-callout green">
+          <p>Estratégico sin técnico = visión sin arquitectura. Técnico sin estratégico = ingeniería sin propósito. Operacional sin las dos = automatización del caos.</p>
+        </div>
+        <p>Claude Code vive en la capa operacional — y funciona mejor cuando las otras dos ya tienen respuestas.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 3 — Disciplina de sesiones
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="2">
+    <div class="left-panel">
+      <div class="label green">Algo que costó aprender</div>
+      <h2>Las sesiones sin objetivo consumen sin avanzar</h2>
+      <div class="line green"></div>
+      <p class="sub">Abrir Claude Code sin un objetivo claro se siente productivo. Pero al final de la sesión es difícil saber qué se logró. Nombrar la sesión y definir el objetivo antes de abrirla cambió eso.</p>
+      <div class="grid grid-2">
+        <div class="card green">
+          <div class="card-label">Sesión de ideación</div>
+          <h3>Pensar antes de hacer</h3>
+          <p>Espacio para explorar, ajustar épicas y definir dirección. Sin presión de entrega.</p>
+        </div>
+        <div class="card blue">
+          <div class="card-label">Sesión de ejecución</div>
+          <h3>Hacer con propósito</h3>
+          <p>Arranca con la épica del proyecto y su carpeta. Contexto completo desde el minuto uno.</p>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">Qué pasaba antes y qué cambió</div>
+      <div class="ctx-body">
+        <p>Las primeras sesiones eran abiertas: "trabajemos en el proyecto". El resultado era inconsistente — a veces mucho avance, a veces horas de trabajo que no quedaban claras en el historial. <strong>Nombrar cada sesión</strong> — por ejemplo <em>sesion/car-39-hexagonal-foundation</em> — fue un cambio simple con impacto claro:</p>
+        <ul class="ctx-list">
+          <li>Obliga a <strong>aclarar el objetivo</strong> antes de empezar, no durante</li>
+          <li>Crea un <strong>registro entendible</strong> del historial de trabajo</li>
+          <li>Define el <strong>scope del agente</strong>: qué puede y qué no puede tocar</li>
+        </ul>
+        <div class="ctx-callout green">
+          <p>La sesión de ideación es distinta: no tiene entregable, solo exploración. Todo lo que emerge ahí alimenta las sesiones de ejecución que siguen.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 4 — El momento que lo estructuró todo
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="3">
+    <div class="left-panel">
+      <div class="label purple">Cuando el caos se volvió navegable</div>
+      <h2>Una sesión que cambió cómo arranca cada sesión</h2>
+      <div class="line purple"></div>
+      <p class="sub">Los proyectos existían pero vivían desconectados. Una sesión de planificación — la <strong style="color:var(--text)">GenIA Strategy</strong> — los ancló a épicas en Linear y carpetas locales. Desde entonces, cada sesión arranca con contexto.</p>
+      <div class="grid grid-3">
+        <div class="card purple">
+          <div class="card-label">Antes</div>
+          <h3>Ideas dispersas</h3>
+          <p>Proyectos desconectados, sin jerarquía, sin trazabilidad entre sesiones.</p>
+        </div>
+        <div class="card blue">
+          <div class="card-label">La sesión</div>
+          <h3>5 épicas · Linear · Carpetas</h3>
+          <p>Cada proyecto anclado a una épica, una carpeta y un conjunto de historias.</p>
+        </div>
+        <div class="card green">
+          <div class="card-label">Después</div>
+          <h3>Cada sesión tiene contexto</h3>
+          <p>Épica activa + carpeta = punto de partida de cualquier sesión de trabajo.</p>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">Qué cambió concretamente después de esa sesión</div>
+      <div class="ctx-body">
+        <p>Antes de esa sesión, los proyectos tenían vida propia pero no conversaban entre sí. No había jerarquía clara, ni forma de saber en qué punto estaba cada uno al retomar trabajo. La GenIA Strategy definió <strong>5 épicas</strong>, cada una con su proyecto Linear, su carpeta local y sus historias:</p>
+        <ul class="ctx-list">
+          <li><strong>Kitsune Studio</strong> — Pipeline multiagente de producción de anime</li>
+          <li><strong>HardCode 30x</strong> — Pagos verificados entre agentes IA</li>
+          <li><strong>Pipeline Multiagente</strong> — SDLC autónomo como pipeline</li>
+          <li><strong>Arquitecto de Agentes</strong> — Sistema de recomendación de arquitecturas</li>
+          <li><strong>Fundamentos de Ingeniería</strong> — Estándares transversales a todos</li>
+        </ul>
+        <div class="ctx-callout purple">
+          <p>Después de esa sesión, cada vez que se abre un proyecto existe: la épica activa, las historias pendientes y la carpeta con todo el contexto. El costo de retomar bajó significativamente.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 5 — Evolución en proyectos
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="4">
+    <div class="left-panel">
+      <div class="label">Cómo fue evolucionando</div>
+      <h2>Cada proyecto resolvió lo que el anterior no podía</h2>
+      <div class="timeline">
+        <div class="t-step">
+          <div class="t-dot on">1</div>
+          <div class="t-title">Kitsune Studio</div>
+          <div class="t-desc">Primer experimento multiagente — muchos problemas sin resolver</div>
+        </div>
+        <div class="t-step">
+          <div class="t-dot on">2</div>
+          <div class="t-title">HardCode 30x</div>
+          <div class="t-desc">Apareció la necesidad de verificar antes de confiar</div>
+        </div>
+        <div class="t-step">
+          <div class="t-dot on">3</div>
+          <div class="t-title">Pipeline Multiagente</div>
+          <div class="t-desc">SDLC completo como pipeline: zonas, gates, recuperación</div>
+        </div>
+        <div class="t-step">
+          <div class="t-dot on">4</div>
+          <div class="t-title">Arquitecto de Agentes</div>
+          <div class="t-desc">9 patrones fundacionales para diseñar sin improvisar</div>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">Las malas prácticas de Kitsune que informaron todo lo demás</div>
+      <div class="ctx-body">
+        <p>Kitsune fue el primer experimento real con agentes en producción. Funcionó — pero dejó ver varios problemas que no eran obvios al principio:</p>
+        <ul class="ctx-list">
+          <li><strong>Sin recuperación</strong>: si algo fallaba, había que reiniciar el pipeline completo desde cero</li>
+          <li><strong>Sin gates humanos</strong>: los agentes ejecutaban fases completas sin ningún punto de revisión</li>
+          <li><strong>Sin aislamiento</strong>: todos los agentes compartían el mismo contexto y el mismo espacio de archivos</li>
+          <li><strong>Criterios implícitos</strong>: el éxito de una fase era "que se vea bien", no algo medible</li>
+          <li><strong>Estado manual</strong>: el seguimiento dependía de un archivo <em>status.md</em> que nadie actualizaba de forma consistente</li>
+        </ul>
+        <div class="ctx-callout red">
+          <p>Ninguno de estos problemas era evidente al diseñar Kitsune. Aparecieron al operar. Cada uno generó una decisión de diseño en el Pipeline Multiagente.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 6 — El pipeline se vuelve operacional
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="5">
+    <div class="left-panel">
+      <div class="label green">El insight que conectó gestión y ejecución</div>
+      <h2>Una unidad de trabajo que habla dos idiomas</h2>
+      <div class="equation">
+        <div class="eq-item">
+          <div class="eq-label">Linear Issue</div>
+          <div class="eq-value">CAR-001</div>
+        </div>
+        <div class="eq-sep">=</div>
+        <div class="eq-item">
+          <div class="eq-label">Unidad de trabajo</div>
+          <div class="eq-value">unit-of-work.md</div>
+        </div>
+        <div class="eq-sep">=</div>
+        <div class="eq-item">
+          <div class="eq-label">Pipeline ejecutable</div>
+          <div class="eq-value">run_pipeline()</div>
+        </div>
+      </div>
+      <div style="margin-top: 20px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent2); border-radius: 0 6px 6px 0; padding: 14px 16px;">
+        <p style="font-size: 13px; color: var(--text); line-height: 1.6;">Cuando el issue de Linear se convierte en input del pipeline, el seguimiento de proyecto y la ejecución de código comparten el mismo lenguaje.</p>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">Cómo surgió esta conexión y qué resolvió</div>
+      <div class="ctx-body">
+        <p>Antes de esta integración, el seguimiento en Linear y el trabajo en Claude vivían separados. Había que actualizar ambos manualmente y era fácil que se desincronizaran. La pregunta que lo resolvió fue: <strong>¿qué pasa si el issue de Linear es también el input del pipeline?</strong></p>
+        <ul class="ctx-list">
+          <li>El seguimiento ve <strong>CAR-001</strong> como "en progreso" en Linear</li>
+          <li>El agente recibe <strong>CAR-001</strong> con su spec y criterios de aceptación</li>
+          <li>Los artefactos generados referencian <strong>CAR-001</strong> en nombre y metadata</li>
+          <li>El PR cierra <strong>CAR-001</strong> al hacer merge — sin pasos manuales</li>
+        </ul>
+        <div class="ctx-callout green">
+          <p>No se trata de dos sistemas sincronizados — es el mismo sistema visto desde dos ángulos. Eso elimina una categoría entera de errores de sincronización.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 7 — Claude Code como equipo
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="6">
+    <div class="left-panel">
+      <div class="label purple">Lo que cambió al pensar en roles, no en prompts</div>
+      <h2>Especialistas con contratos, no asistentes genéricos</h2>
+      <div class="pipeline" style="margin-top: 20px;">
+        <div class="p-step blue">
+          <div class="p-role">Zona 1</div>
+          <div class="p-name">PRD + Inception</div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-gate">G1</div>
+        <div class="p-arrow">→</div>
+        <div class="p-step purple">
+          <div class="p-role">Agente</div>
+          <div class="p-name">Functional Design</div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-step blue">
+          <div class="p-role">Agente</div>
+          <div class="p-name">Dev</div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-parallel">
+          <div class="p-step green">
+            <div class="p-role">Agente ‖</div>
+            <div class="p-name">Test</div>
+          </div>
+          <div class="p-step red">
+            <div class="p-role">Agente ‖</div>
+            <div class="p-name">Security</div>
+          </div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-gate">G2</div>
+        <div class="p-arrow">→</div>
+        <div class="p-step green">
+          <div class="p-role">Agente</div>
+          <div class="p-name">Deploy</div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-gate">G3</div>
+      </div>
+      <p style="font-size: 12px; color: var(--muted); margin-top: 16px; line-height: 1.6;">Cada agente: rol definido · contrato de entrada/salida · worktree propio · gate de aprobación humana</p>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">Qué aprendí al dejar de usar Claude como asistente genérico</div>
+      <div class="ctx-body">
+        <p>El patrón que no funcionaba bien: un solo prompt largo pidiendo diseño + código + tests juntos. El resultado era inconsistente y difícil de depurar. Lo que funcionó fue separar responsabilidades como lo haría un equipo real.</p>
+        <p>Cada agente <strong>solo lee lo que necesita, solo escribe en su espacio y solo conoce su fase</strong>. Eso redujo interferencias y hizo los resultados más predecibles:</p>
+        <ul class="ctx-list">
+          <li>Test y Security <strong>corren en paralelo</strong> — sin esperar uno al otro</li>
+          <li>Cada agente tiene <strong>criterios de aceptación medibles</strong>, no solo "que funcione"</li>
+          <li>Los gates <strong>G1, G2, G3</strong> son los puntos donde el humano decide — el agente no aprueba su propio trabajo</li>
+        </ul>
+        <div class="ctx-callout purple">
+          <p>Pensar en roles y contratos — en lugar de en prompts — fue lo que hizo al sistema más robusto.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 8 — Qué es el Pipeline Multiagente
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="7">
+    <div class="left-panel">
+      <div class="label purple">Épica 3 — AI-DLC</div>
+      <h2>Un sistema que automatiza el ciclo de desarrollo</h2>
+      <div class="line purple"></div>
+      <p class="sub">El Pipeline Multiagente recibe un PRD como input y produce código desplegado como output, pasando por diseño, desarrollo, tests, seguridad y despliegue — con humanos en los puntos donde las decisiones importan.</p>
+      <div class="layers" style="margin-top: 18px;">
+        <div class="layer l1">
+          <div class="layer-icon">🔁</div>
+          <div>
+            <div class="layer-title">Dos zonas de autonomía</div>
+            <div class="layer-desc">Zona 1: humano + Claude co-crean el diseño. Zona 2: agentes ejecutan autónomamente con gates de aprobación.</div>
+          </div>
+        </div>
+        <div class="layer l2">
+          <div class="layer-icon">🤖</div>
+          <div>
+            <div class="layer-title">6 agentes especializados</div>
+            <div class="layer-desc">Architecture · Functional Design · Dev · Test · Security · Deploy — cada uno con su fase, su worktree y su contrato.</div>
+          </div>
+        </div>
+        <div class="layer l3">
+          <div class="layer-icon">🔌</div>
+          <div>
+            <div class="layer-title">Agnóstico al ejecutor LLM</div>
+            <div class="layer-desc">Funciona con Claude Code y OpenCode. Comunicación via filesystem + git. Sin dependencias de runtime específico.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">Las cuatro premisas que guiaron su diseño</div>
+      <div class="ctx-body">
+        <p>El diseño del pipeline no partió de preferencias técnicas — partió de cuatro restricciones que surgieron de los problemas encontrados en proyectos anteriores:</p>
+        <ul class="ctx-list">
+          <li><strong>Agnóstico</strong>: el sistema no puede depender de un modelo específico. Si cambia el proveedor, el pipeline sigue funcionando</li>
+          <li><strong>Eficiente</strong>: cada agente recibe solo los artefactos que necesita para su fase. Los prompts son templates con placeholders, no dumps de contexto completo</li>
+          <li><strong>Trazable</strong>: log JSONL append-only por fase, <em>status.md</em> regenerado en cada transición. Cualquier decisión de cualquier agente puede auditarse</li>
+          <li><strong>Human-in-the-loop</strong>: el humano guía la ideación y especificación. Los gates G1, G2 y G3 son puntos de aprobación que no se pueden saltear</li>
+        </ul>
+        <div class="ctx-callout purple">
+          <p>Estas premisas convirtieron al pipeline en algo más que un experimento: son las condiciones mínimas para que sea confiable en producción.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 9 — Estado actual del Pipeline
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="8">
+    <div class="left-panel">
+      <div class="label green">Marzo 2026</div>
+      <h2>Lo que está construido hoy</h2>
+      <div class="line green"></div>
+      <div class="grid grid-3" style="margin-top: 16px;">
+        <div class="card blue">
+          <div class="card-label">Sprints 1–8</div>
+          <h3>Core del pipeline</h3>
+          <p>Dominio, puertos, adaptadores, orquestador, CLI, gates, handoff, recovery.</p>
+        </div>
+        <div class="card purple">
+          <div class="card-label">Wave 1–2</div>
+          <h3>Seguridad + inner loops</h3>
+          <p>Sandbox, secrets, Architecture Agent, inner loops por agente, workspace isolation, model routing.</p>
+        </div>
+        <div class="card green">
+          <div class="card-label">Wave 3</div>
+          <h3>Cobertura de tests</h3>
+          <p>15 historias de tests: unitarios, integración, E2E, seguridad y recovery.</p>
+        </div>
+      </div>
+      <div style="margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;">
+        <div class="card-label" style="margin-bottom: 8px;">Agentes activos en la versión actual</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; color: var(--muted);">Architecture</span>
+          <span style="font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; color: var(--muted);">Functional Design</span>
+          <span style="font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; color: var(--muted);">Dev</span>
+          <span style="font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; color: var(--muted);">Test ‖</span>
+          <span style="font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; color: var(--muted);">Security ‖</span>
+          <span style="font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; color: var(--muted);">Deploy</span>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">Qué puede hacer el pipeline hoy y qué sigue</div>
+      <div class="ctx-body">
+        <p>El pipeline puede ejecutar el ciclo completo <strong>de forma end-to-end</strong>: recibe un PRD, genera diseño, produce código, lo testea y lo despliega — con los tres gates humanos en los puntos correctos.</p>
+        <p>Algunas características que se fueron sumando a lo largo de las waves:</p>
+        <ul class="ctx-list">
+          <li><strong>Architecture Agent</strong>: una fase previa a Dev que genera el diseño hexagonal del componente antes de escribir código</li>
+          <li><strong>Inner loops por agente</strong>: Dev, Test, Security y Deploy tienen su propio ciclo interno con granularidad de tarea, no de fase completa</li>
+          <li><strong>Workspace isolation</strong>: los artefactos no se inyectan en los prompts — cada agente lee directamente desde su worktree</li>
+          <li><strong>Model routing</strong>: Sonnet para orquestación, Haiku para exploración, sub-agentes paralelos donde aplica</li>
+        </ul>
+        <div class="ctx-callout green">
+          <p>Activo hoy: incorporar principios SOLID en los prompts de Dev Agent y Architecture Agent (CAR-125 y CAR-126). El pipeline sigue evolucionando en cada sesión de trabajo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 10 — Lo que esto habilita
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="9">
+    <div class="left-panel">
+      <div class="label green">Lo que quedó después de todo el proceso</div>
+      <h2>Un SDLC que se puede ejecutar, trazar y recuperar</h2>
+      <div class="final-grid">
+        <div class="card green">
+          <div class="card-label">Ejecutable</div>
+          <h3>Cada fase es un agente</h3>
+          <p>Con inputs definidos, outputs estructurados y criterios de éxito medibles.</p>
+        </div>
+        <div class="card blue">
+          <div class="card-label">Trazable</div>
+          <h3>Todo queda registrado</h3>
+          <p>JSONL append-only, artefactos por fase, Linear como fuente de verdad del ciclo de vida.</p>
+        </div>
+        <div class="card purple">
+          <div class="card-label">Recuperable</div>
+          <h3>Sin rehacer trabajo</h3>
+          <p>Si una fase falla, se reintenta esa fase — no el pipeline completo.</p>
+        </div>
+        <div class="card red">
+          <div class="card-label">Humanos donde importa</div>
+          <h3>Gates en puntos críticos</h3>
+          <p>G1, G2, G3 son decisiones humanas. Los agentes exploran; las personas aprueban.</p>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="ctx-label">Por qué estas cuatro propiedades no eran evidentes al principio</div>
+      <div class="ctx-body">
+        <p>En Kitsune, ninguna de estas cuatro existía. Los pipelines funcionaban en sesiones controladas pero fallaban al escalar o al retomarse días después. Cada una de estas propiedades vino de un problema real:</p>
+        <ul class="ctx-list">
+          <li><strong>Ejecutable</strong> vino del problema de Kitsune: reiniciar todo al fallar una fase. Ahora cada fase es independiente</li>
+          <li><strong>Trazable</strong> vino del problema del estado manual: un <em>status.md</em> que nadie mantenía. Ahora el JSONL es append-only y automático</li>
+          <li><strong>Recuperable</strong> vino de perder trabajo al fallar: worktrees aislados + max retries por fase sin afectar las anteriores</li>
+        </ul>
+        <div class="ctx-callout green">
+          <p>Estas propiedades no se diseñaron en papel — emergieron de operar sistemas que no las tenían. Esa es la única razón por la que funcionan en la práctica.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 11 — Gracias
+  ══════════════════════════════════════════ -->
+  <div class="slide" data-index="10">
+    <div class="left-panel" style="justify-content: center; align-items: center; text-align: center;">
+      <div class="label" style="text-align:center;">Gracias</div>
+      <h1 style="font-size: clamp(36px, 4vw, 56px); margin-top: 8px;">Carlos Tonguino</h1>
+      <p style="font-size: 16px; color: var(--muted); margin-top: 10px; letter-spacing: 0.5px;">IA Product Manager</p>
+      <div style="width: 40px; height: 2px; background: var(--accent); margin: 28px auto; border-radius: 2px;"></div>
+      <a href="https://www.linkedin.com/in/carlos-tonguino/" target="_blank"
+         style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--accent); text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 20px; background: var(--surface); transition: border-color 0.2s;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+        </svg>
+        linkedin.com/in/carlos-tonguino
+      </a>
+    </div>
+    <div class="right-panel" style="justify-content: center; align-items: flex-start;">
+      <div class="ctx-label">Lo que queda de todo esto</div>
+      <div class="ctx-body">
+        <p>Este recorrido — de Kitsune al Pipeline Multiagente — es una experiencia personal de cómo fue evolucionando mi forma de trabajar con Claude Code.</p>
+<div class="ctx-callout" style="margin-top: 20px;">
+          <p>Si estás construyendo algo con IA y quieres conversar, con gusto.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button class="nav-btn" id="prev" onclick="go(-1)" disabled>←</button>
+  <span class="nav-counter" id="counter">1 / 8</span>
+  <button class="nav-btn" id="next" onclick="go(1)">→</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let current  = 0;
+
+  function go(dir) {
+    const next = current + dir;
+    if (next < 0 || next >= total) return;
+
+    slides[current].classList.add('exit');
+    slides[current].classList.remove('active');
+
+    setTimeout(() => {
+      slides[current].classList.remove('exit');
+      current = next;
+      slides[current].classList.add('active');
+      update();
+    }, 200);
+  }
+
+  function update() {
+    document.getElementById('counter').textContent  = `${current + 1} / ${total}`;
+    document.getElementById('slide-num').textContent =
+      String(current + 1).padStart(2,'0') + ' / ' + String(total).padStart(2,'0');
+    document.getElementById('progress').style.width = `${((current + 1) / total) * 100}%`;
+    document.getElementById('prev').disabled = current === 0;
+    document.getElementById('next').disabled = current === total - 1;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); go(1);  }
+    if (['ArrowLeft','ArrowUp'].includes(e.key))         { e.preventDefault(); go(-1); }
+  });
+
+  let startX = 0;
+  document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+  });
+
+  update();
+</script>
+</body>
+</html>
