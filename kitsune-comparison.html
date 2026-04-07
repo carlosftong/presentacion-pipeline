@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitsune: Claude Code vs OpenRouter — Estudio Comparativo 1 Semana</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-dark: #0f1419;
+            --bg-card: #1a1f2e;
+            --bg-hover: #242b3b;
+            --text-primary: #e0e0e0;
+            --text-secondary: #9ca3af;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border: #2d3748;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(15, 20, 25, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+            z-index: 100;
+        }
+        header nav { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+        .logo { font-weight: 700; font-size: 18px; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .nav-links { display: flex; gap: 16px; list-style: none; align-items: center; }
+        .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--accent-blue); }
+        section { margin: 80px 0; animation: fadeIn 0.6s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .section-title { font-size: 32px; font-weight: 700; margin-bottom: 32px; color: var(--text-primary); }
+        .hero { height: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 32px; padding: 120px 0; }
+        .hero h1 { font-size: 56px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; }
+        .hero p { font-size: 18px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6; }
+        .hero .subtitle { font-size: 20px; color: var(--accent-blue); font-weight: 600; margin: 24px 0; }
+        .context-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 32px 0; text-align: left; max-width: 600px; }
+        .context-box h3 { color: var(--accent-blue); margin-bottom: 8px; font-size: 14px; }
+        .context-box p { color: var(--text-secondary); font-size: 14px; line-height: 1.8; }
+        .logos { display: flex; justify-content: center; gap: 48px; margin: 48px 0; flex-wrap: wrap; }
+        .logo-box { width: 120px; height: 120px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; transition: all 0.3s; }
+        .logo-box:hover { transform: translateY(-4px); border-color: var(--accent-blue); }
+        .cta-button { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; padding: 16px 32px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .cta-button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3); }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px; transition: all 0.3s; }
+        .card:hover { border-color: var(--accent-blue); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1); }
+        .expandible { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; transition: all 0.3s; }
+        .expandible:hover { background: var(--bg-hover); border-color: var(--accent-blue); }
+        .expandible-icon { transition: transform 0.3s; }
+        .expandible.active .expandible-icon { transform: rotate(180deg); }
+        .expandible-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; padding: 0; margin-bottom: 12px; }
+        .expandible-content.active { max-height: 1000px; padding: 16px; background: var(--bg-hover); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; }
+        .table-wrapper { overflow-x: auto; margin: 24px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: var(--bg-hover); padding: 12px; text-align: left; font-weight: 600; color: var(--text-primary); border-bottom: 2px solid var(--border); }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        tr:hover { background: var(--bg-hover); }
+        .timeline { position: relative; padding: 24px 0; }
+        .timeline-item { padding-left: 40px; position: relative; margin-bottom: 24px; }
+        .timeline-item::before { content: ''; position: absolute; left: 0; top: 0; width: 24px; height: 24px; background: var(--accent-blue); border-radius: 50%; border: 3px solid var(--bg-dark); }
+        .timeline-item::after { content: ''; position: absolute; left: 10px; top: 24px; width: 2px; height: 100%; background: var(--border); }
+        .timeline-item:last-child::after { display: none; }
+        .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0; }
+        .comparison-item { background: var(--bg-card); padding: 24px; border-radius: 8px; border: 1px solid var(--border); }
+        .comparison-item h3 { font-size: 18px; margin-bottom: 12px; color: var(--accent-blue); }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 8px; margin-bottom: 8px; }
+        .badge-high { background: var(--accent-red); }
+        .badge-medium { background: var(--accent-purple); }
+        .badge-low { background: var(--accent-green); }
+        code, pre { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: 'Courier New', monospace; font-size: 13px; overflow-x: auto; margin: 12px 0; }
+        pre { padding: 16px; }
+        footer { border-top: 1px solid var(--border); padding: 48px 0; margin-top: 80px; text-align: center; }
+        footer p { color: var(--text-secondary); font-size: 14px; }
+        footer a { color: var(--accent-blue); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .hero p { font-size: 16px; }
+            .comparison-grid { grid-template-columns: 1fr; }
+            .logos { gap: 24px; }
+            .nav-links { display: none; }
+            section { margin: 48px 0; }
+            .container { padding: 0 16px; }
+            .context-box { max-width: 100%; }
+        }
+        .success { color: var(--accent-green); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">🦊 Kitsune: Claude vs OpenRouter</div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Kitsune:<br>Claude Code vs OpenRouter</h1>
+                <p class="subtitle">Un estudio comparativo de 1 semana</p>
+
+                <!-- CONTEXTO: QUÉ ES KITSUNE -->
+                <div class="context-box">
+                    <h3>🦊 ¿Qué es Kitsune Studio?</h3>
+                    <p>
+                        Plataforma que usa <strong>agentes IA multiagente</strong> para generar temporadas de anime completas (12 episodios) desde una simple descripción de historia. 
+                        Automatiza todo el pipeline: guionización, diseño de personajes, storyboarding, animación, edición y post-producción.
+                    </p>
+                </div>
+
+                <!-- CONTEXTO: QUÉ ES HARNESS -->
+                <div class="context-box">
+                    <h3>⚙️ ¿Qué es Harness-Engineer?</h3>
+                    <p>
+                        <strong>Orquestador universal</strong> que coordina múltiples agentes IA en paralelo. 
+                        Gestiona fases de desarrollo (discovery, design, development, validation, delivery), 
+                        rutas tareas entre modelos, maneja estado compartido y acelera ciclos de construcción autónoma.
+                    </p>
+                </div>
+
+                <p style="color: var(--text-secondary); margin-top: 32px;">
+                    ¿Pueden los modelos open source alcanzar 95%+ de calidad de Claude al 0.5% del costo?
+                </p>
+
+                <div class="logos">
+                    <div class="logo-box">🤖</div>
+                    <div style="display: flex; align-items: center; color: var(--text-secondary);">vs</div>
+                    <div class="logo-box">🔓</div>
+                </div>
+
+                <button class="cta-button" onclick="document.getElementById('desafio').scrollIntoView();">
+                    ↓ Explorar Detalles
+                </button>
+            </div>
+        </section>
+
+        <section id="desafio">
+            <div class="container">
+                <h2 class="section-title">El Desafío</h2>
+                <div class="card">
+                    <h3>El Problema</h3>
+                    <p>Construir agentes IA con Claude es <strong>muy caro:</strong></p>
+                    <ul style="margin: 12px 0 12px 24px;">
+                        <li>Claude Code Max: <strong>$3,891</strong> por ciclo de desarrollo</li>
+                        <li>Cada error requiere iteración = más tokens = más costo</li>
+                        <li>No es escalable para empresas pequeñas</li>
+                    </ul>
+                    <h3 style="margin-top: 24px;">La Pregunta</h3>
+                    <p>¿Existen alternativas open source que alcancen 95%+ de calidad de Claude al 0.5% del costo?</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+                <h2 class="section-title">La Hipótesis</h2>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h3>Nuestra Afirmación</h3>
+                        <p><strong>OpenRouter + Llama/Qwen pueden alcanzar 95%+ de calidad de Claude al 0.5% del costo.</strong></p>
+                    </div>
+                    <div class="comparison-item">
+                        <h3>Por Qué Importa</h3>
+                        <ul style="margin-left: 16px;">
+                            <li><strong>Independencia:</strong> No depender de Claude Code</li>
+                            <li><strong>Costo:</strong> $20 vs $3,891 por ciclo</li>
+                            <li><strong>Escalabilidad:</strong> 100 ciclos sin arruinar presupuesto</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+                <h2 class="section-title">Qué Construimos</h2>
+                <div class="card">
+                    <h3>Kitsune MVP: 1 Capítulo de Anime Funcional</h3>
+                    <p style="margin: 12px 0;">Reconstruimos un pipeline completo que genera un capítulo de anime (5 minutos).</p>
+                    <p style="margin-top: 24px;"><strong>12 Historias Core | 50-60 Horas | 2 Repos en Paralelo usando Harness</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="medicion">
+            <div class="container">
+                <h2 class="section-title">Cómo Medimos Calidad</h2>
+                <div class="card">
+                    <h3 style="margin-bottom: 12px;">5 Dimensiones (20% cada una)</h3>
+                    <div class="expandible" onclick="toggleExpand(this)">
+                        <div>
+                            <h4>1️⃣ Limpieza de Código</h4>
+                        </div>
+                        <span class="expandible-icon">▼</span>
+                    </div>
+                    <div class="expandible-content">
+                        <ul style="margin: 8px 0 8px 24px;">
+                            <li>ESLint violations: &lt;10</li>
+                            <li>Complexity: &lt;8 promedio</li>
+                            <li>Duplication: &lt;3%</li>
+                        </ul>
+                    </div>
+
+                    <div class="expandible" onclick="toggleExpand(this)">
+                        <div>
+                            <h4>2️⃣ Funcionalidad</h4>
+                        </div>
+                        <span class="expandible-icon">▼</span>
+                    </div>
+                    <div class="expandible-content">
+                        <ul style="margin: 8px 0 8px 24px;">
+                            <li>Test coverage: ≥75%</li>
+                            <li>Test pass rate: 100%</li>
+                            <li>E2E sin crashes: ✓</li>
+                        </ul>
+                    </div>
+
+                    <div class="expandible" onclick="toggleExpand(this)">
+                        <div>
+                            <h4>3️⃣ Mantenibilidad</h4>
+                        </div>
+                        <span class="expandible-icon">▼</span>
+                    </div>
+                    <div class="expandible-content">
+                        <ul style="margin: 8px 0 8px 24px;">
+                            <li>Architecture coherence: Manual (1-10)</li>
+                            <li>Avg function size: &lt;30 líneas</li>
+                            <li>Comment ratio: &gt;20%</li>
+                        </ul>
+                    </div>
+
+                    <div class="expandible" onclick="toggleExpand(this)">
+                        <div>
+                            <h4>4️⃣ Performance</h4>
+                        </div>
+                        <span class="expandible-icon">▼</span>
+                    </div>
+                    <div class="expandible-content">
+                        <ul style="margin: 8px 0 8px 24px;">
+                            <li>Pipeline time: Comparativa vs Claude</li>
+                            <li>Peak memory: &lt;X GB</li>
+                            <li>API latency: &lt;Z ms</li>
+                        </ul>
+                    </div>
+
+                    <div class="expandible" onclick="toggleExpand(this)">
+                        <div>
+                            <h4>5️⃣ General (Manual Review)</h4>
+                        </div>
+                        <span class="expandible-icon">▼</span>
+                    </div>
+                    <div class="expandible-content">
+                        <ul style="margin: 8px 0 8px 24px;">
+                            <li>9-10: Production-ready</li>
+                            <li>7-8: Bueno, mejoras menores</li>
+                            <li>5-6: Funcional, necesita refactoring</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="timeline">
+            <div class="container">
+                <h2 class="section-title">Timeline: 7 Días</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h3>Día 1: Setup</h3>
+                        <p style="color: var(--text-secondary);">Harness + 2 repos (Claude vs OpenRouter)</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h3>Días 2-3: Agentes Core</h3>
+                        <p style="color: var(--text-secondary);">CAR-5 (Tests) + CAR-64 (SyncValidator)</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h3>Día 4: E2E</h3>
+                        <p style="color: var(--text-secondary);">Generar capítulo MP4 completo</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h3>Días 5-6: Frontend + API</h3>
+                        <p style="color: var(--text-secondary);">Dashboard + rutas faltantes</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h3>Día 7: Medición</h3>
+                        <p style="color: var(--text-secondary);">Linters, tests, reporte final</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="costos">
+            <div class="container">
+                <h2 class="section-title">Comparativa de Costos</h2>
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Stack</th>
+                                    <th>Costo</th>
+                                    <th>Orquestación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Claude Code Max + Harness</strong></td>
+                                    <td><strong>$0*</strong></td>
+                                    <td>Harness → Claude Code</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>OpenCode + OpenRouter + Harness</strong></td>
+                                    <td><strong>$21.10</strong></td>
+                                    <td>Harness → OpenCode → OpenRouter</td>
+                                </tr>
+                                <tr style="background: var(--bg-hover);">
+                                    <td colspan="2"><strong>Ahorro Teórico</strong></td>
+                                    <td><span style="color: var(--accent-green);">$3,870 (99.5%)</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="margin-top: 16px; color: var(--text-secondary);">* Ya pagado en suscripción</p>
+                </div>
+            </div>
+        </section>
+
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2026 HardCode30x | Estudio Comparativo Claude Code vs OpenRouter</p>
+            <p style="margin-top: 12px;">
+                <a href="#">LinkedIn</a> • <a href="#">GitHub</a> • <a href="#">Contacto</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleExpand(element) {
+            element.classList.toggle('active');
+            const content = element.nextElementSibling;
+            content.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

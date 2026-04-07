@@ -81,6 +81,11 @@
       box-shadow: 0 8px 16px rgba(63, 185, 80, 0.1);
     }
 
+    .card.kitsune:hover {
+      border-color: #d084d0;
+      box-shadow: 0 8px 16px rgba(208, 132, 208, 0.1);
+    }
+
     .card-icon {
       font-size: 48px;
       margin-bottom: 20px;
@@ -116,6 +121,10 @@
 
     .card.dag .card-btn {
       background: var(--accent2);
+    }
+
+    .card.kitsune .card-btn {
+      background: #d084d0;
     }
 
     .card-btn:hover {
@@ -163,6 +172,14 @@
         <div class="card-icon">🗺️</div>
         <h2>DAG: Dependencias</h2>
         <p>Cómo manejar dependencias de código sin saturar el contexto en sistemas multiagente.</p>
+        <span class="card-btn">Ver presentación</span>
+      </a>
+
+      <!-- Kitsune: Claude vs OpenRouter -->
+      <a href="kitsune-comparison.html" class="card kitsune">
+        <div class="card-icon">🦊</div>
+        <h2>Kitsune: Claude vs OpenRouter</h2>
+        <p>Estudio comparativo de 1 semana construyendo anime con modelos propietarios vs open source.</p>
         <span class="card-btn">Ver presentación</span>
       </a>
     </div>
