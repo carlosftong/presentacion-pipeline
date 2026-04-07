@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presentaciones - Arquitectura de Agentes</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #21262d;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --text: #e6edf3;
+      --muted: #8b949e;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .header h1 {
+      font-size: 56px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      font-size: 18px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .presentations {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 16px rgba(88, 166, 255, 0.1);
+      transform: translateY(-4px);
+    }
+
+    .card.dag:hover {
+      border-color: var(--accent2);
+      box-shadow: 0 8px 16px rgba(63, 185, 80, 0.1);
+    }
+
+    .card-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .card p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      flex: 1;
+    }
+
+    .card-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .card.dag .card-btn {
+      background: var(--accent2);
+    }
+
+    .card-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .footer {
+      text-align: center;
+      padding-top: 40px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .presentations {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Presentaciones</h1>
+      <p>Arquitectura de Agentes IA y Coordinación Multiagente</p>
+    </div>
+
+    <div class="presentations">
+      <!-- Pipeline -->
+      <a href="index.html" class="card">
+        <div class="card-icon">🔄</div>
+        <h2>Pipeline Multiagente</h2>
+        <p>Arquitectura y orquestación de agentes dev, QA y security en un flujo de trabajo integrado.</p>
+        <span class="card-btn">Ver presentación</span>
+      </a>
+
+      <!-- DAG -->
+      <a href="dag.html" class="card dag">
+        <div class="card-icon">🗺️</div>
+        <h2>DAG: Dependencias</h2>
+        <p>Cómo manejar dependencias de código sin saturar el contexto en sistemas multiagente.</p>
+        <span class="card-btn">Ver presentación</span>
+      </a>
+    </div>
+
+    <div class="footer">
+      <p>© 2026 | Arquitectura de Agentes IA</p>
+    </div>
+  </div>
+</body>
+</html>
